@@ -16,7 +16,7 @@ $ helm install chart-tile38
 
 ## Configuration
 
-The following table lists the configurable parameters of the PostgreSQL chart and their default values.
+The following table lists the configurable parameters of the Tile38 chart and their default values.
 
 | Parameter                  | Description                                     | Default                                                    |
 | -----------------------    | ---------------------------------------------   | ---------------------------------------------------------- |
