@@ -1,0 +1,12 @@
+apiVersion: v1
+appVersion: "1.12.3"
+description: Deploy a tile38 cluster
+name: tile38
+version: 0.1.0
+
+home: http://tile38.com
+icon: https://github.com/tidwall/tile38/raw/master/pkg/assets/logo1500.png
+sources:
+- https://github.com/tidwall/tile38
+maintainers:
+- name: nouney

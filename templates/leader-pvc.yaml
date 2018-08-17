@@ -1,0 +1,31 @@
+{{- if .Values.leader.persistentVolume.enabled -}}
+{{- if not .Values.leader.persistentVolume.existingClaim -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  {{- if .Values.leader.persistentVolume.annotations }}
+  annotations:
+{{ toYaml .Values.leader.persistentVolume.annotations | indent 4 }}
+  {{- end }}
+  labels:
+    app: {{ template "tile38.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+    role: leader
+  name: {{ template "tile38.fullname" . }}-leader
+spec:
+  accessModes:
+{{ toYaml .Values.leader.persistentVolume.accessModes | indent 4 }}
+{{- if .Values.leader.persistentVolume.storageClass }}
+{{- if (eq "-" .Values.leader.persistentVolume.storageClass) }}
+  storageClassName: ""
+{{- else }}
+  storageClassName: "{{ .Values.leader.persistentVolume.storageClass }}"
+{{- end }}
+{{- end }}
+  resources:
+    requests:
+      storage: "{{ .Values.leader.persistentVolume.size }}"
+{{- end -}}
+{{- end -}}

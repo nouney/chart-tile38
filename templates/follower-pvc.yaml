@@ -1,0 +1,31 @@
+{{- if .Values.follower.persistentVolume.enabled -}}
+{{- if not .Values.follower.persistentVolume.existingClaim -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  {{- if .Values.follower.persistentVolume.annotations }}
+  annotations:
+{{ toYaml .Values.follower.persistentVolume.annotations | indent 4 }}
+  {{- end }}
+  labels:
+    app: {{ template "tile38.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+    role: follower
+  name: {{ template "tile38.fullname" . }}-follower
+spec:
+  accessModes:
+{{ toYaml .Values.follower.persistentVolume.accessModes | indent 4 }}
+{{- if .Values.follower.persistentVolume.storageClass }}
+{{- if (eq "-" .Values.follower.persistentVolume.storageClass) }}
+  storageClassName: ""
+{{- else }}
+  storageClassName: "{{ .Values.follower.persistentVolume.storageClass }}"
+{{- end }}
+{{- end }}
+  resources:
+    requests:
+      storage: "{{ .Values.follower.persistentVolume.size }}"
+{{- end -}}
+{{- end -}}

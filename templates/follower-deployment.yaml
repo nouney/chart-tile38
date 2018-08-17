@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "tile38.fullname" . }}-follower
+  labels:
+    app: {{ template "tile38.name" . }}
+    chart: {{ template "tile38.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    role: follower
+spec:
+  replicas: {{ .Values.follower.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "tile38.name" . }}
+      release: {{ .Release.Name }}
+      role: follower
+  template:
+    metadata:
+      labels:
+        app: {{ template "tile38.name" . }}
+        release: {{ .Release.Name }}
+        role: follower
+    spec:
+      initContainers:
+        - name: ping-leader
+          image: busybox
+          command: ["wget", "{{ template "tile38.fullname" .}}-leader:{{.Values.service.port}}/ping"]
+        - name: load-config
+          image: busybox
+          command: ["cp", "/config/config", "/data/config"]
+          volumeMounts:
+            - name: data
+              mountPath: "{{ .Values.follower.persistentVolume.mountPath }}"
+              subPath: "{{ .Values.follower.persistentVolume.subPath }}"
+            - name: config
+              mountPath: /config
+      containers:
+        - name: {{ .Chart.Name }}-follower
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: "{{ .Values.follower.persistentVolume.mountPath }}"
+              subPath: "{{ .Values.follower.persistentVolume.subPath }}"
+          resources:
+{{ toYaml .Values.follower.resources | indent 12 }}
+    {{- with .Values.follower.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.follower.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.follower.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ template "tile38.fullname" . }}-follower
+        - name: data
+        {{- if .Values.follower.persistentVolume.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ if .Values.follower.persistentVolume.existingClaim }}{{ .Values.follower.persistentVolume.existingClaim }}{{- else }}{{ template "tile38.fullname" . }}-follower{{- end }}
+        {{- else }}
+          emptyDir: {}
+        {{- end -}}

@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "tile38.fullname" . }}-leader
+  labels:
+    app: {{ template "tile38.name" . }}
+    chart: {{ template "tile38.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    role: leader
+spec:
+  replicas: {{ .Values.leader.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "tile38.name" . }}
+      release: {{ .Release.Name }}
+      role: leader
+  template:
+    metadata:
+      labels:
+        app: {{ template "tile38.name" . }}
+        release: {{ .Release.Name }}
+        role: leader
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}-leader
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: "{{ .Values.leader.persistentVolume.mountPath }}"
+              subPath: "{{ .Values.leader.persistentVolume.subPath }}"
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+{{ toYaml .Values.leader.resources | indent 12 }}
+    {{- with .Values.leader.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.leader.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.leader.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+      volumes:
+        - name: data
+        {{- if .Values.leader.persistentVolume.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ if .Values.leader.persistentVolume.existingClaim }}{{ .Values.leader.persistentVolume.existingClaim }}{{- else }}{{ template "tile38.fullname" . }}-leader{{- end }}
+        {{- else }}
+          emptyDir: {}
+        {{- end -}}
