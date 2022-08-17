@@ -29,6 +29,19 @@ spec:
         release: {{ .Release.Name }}
         role: leader
     spec:
+      initContainers:
+        - name: ping-leader
+          image: busybox
+          command: ["wget", "{{ template "tile38.fullname" .}}-leader:{{.Values.service.port}}/healthz"]
+        - name: load-config
+          image: busybox
+          command: ["cp", "/config/config", "/data/config"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+              subPath: "{{ .Values.leader.persistentVolume.subPath }}"
+            - name: config
+              mountPath: /config
       containers:
         - name: {{ .Chart.Name }}-leader
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -37,6 +50,8 @@ spec:
           args:
             - "-d"
             - "/data"
+            - "-l"
+            - "json"
             {{- if .Values.leader.prometheus.enabled }}
             - "--metrics-addr={{ .Values.leader.prometheus.listenAddr }}:{{ .Values.leader.prometheus.port }}"
             {{- end }}
@@ -53,10 +68,16 @@ spec:
             - name: data
               mountPath: "{{ .Values.leader.persistentVolume.mountPath }}"
               subPath: "{{ .Values.leader.persistentVolume.subPath }}"
-          readinessProbe:
+          livenessProbe:
             tcpSocket:
               port: {{ .Values.service.port }}
-            initialDelaySeconds: 10
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 30
             periodSeconds: 10
           resources:
 {{ toYaml .Values.leader.resources | indent 12 }}
@@ -73,6 +94,9 @@ spec:
 {{ toYaml . | indent 8 }}
     {{- end }}
       volumes:
+        - name: config
+          configMap:
+            name: {{ template "tile38.fullname" . }}-leader
         - name: data
         {{- if .Values.leader.persistentVolume.enabled }}
           persistentVolumeClaim:
