@@ -38,7 +38,7 @@ spec:
             - "-d"
             - "/data"
             {{- if .Values.leader.prometheus.enabled }}
-            - "--metrics-addr={{ .Values.leader.prometheus.host }}:{{ .Values.leader.prometheus.port }}"
+            - "--metrics-addr={{ .Values.leader.prometheus.listenAddr }}:{{ .Values.leader.prometheus.port }}"
             {{- end }}
           ports:
             - name: http

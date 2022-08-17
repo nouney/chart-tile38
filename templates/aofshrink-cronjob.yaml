@@ -1,0 +1,37 @@
+{{- if .Values.aofshrink_job.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ template "tile38.fullname" . }}-aofshrink
+spec:
+  schedule: "{{ .Values.aofshrink_job.schedule }}"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+              - name: {{ .Chart.Name }}-aofshrink
+                image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+                imagePullPolicy: {{ .Values.image.pullPolicy }}
+                command:
+                - /bin/sh
+                - -c
+                - 'echo "AOFSHRINK" | tile38-cli -h {{ template "tile38.fullname" . }}-leader.{{.Release.Namespace}}.svc.cluster.local -p {{ .Values.service.port }}'
+                {{- with .Values.aofshrink_job.resources }}
+                resources:
+{{ toYaml . | indent 18 }}
+                {{- end }}
+          {{- with .Values.aofshrink_job.nodeSelector }}
+          nodeSelector:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- with .Values.aofshrink_job.affinity }}
+          affinity:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- with .Values.aofshrink_job.tolerations }}
+          tolerations:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+{{- end }}

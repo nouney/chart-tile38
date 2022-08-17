@@ -56,3 +56,12 @@ follower:
     listenAddr: 0.0.0.0
     datadog:
       enabled: true
+
+aofshrink_job:
+  enabled: true
+  schedule: "0,30 * * * *"
+  resources: {}
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+  
