@@ -17,6 +17,13 @@ spec:
       role: leader
   template:
     metadata:
+      annotations:
+        {{- if .Values.leader.prometheus.datadog.enabled }}
+        ad.datadoghq.com/{{ .Chart.Name }}-leader.check_names: '["openmetrics"]'
+        ad.datadoghq.com/{{ .Chart.Name }}-leader.init_configs: '[{}]'
+        ad.datadoghq.com/{{ .Chart.Name }}-leader.instances: '[{"namespace": "tile38", "openmetrics_endpoint": "http://%%host%%:%%port_metrics%%/metrics", "metrics": ["tile38.*"]}]'
+        ad.datadoghq.com/tolerate-unready: "true"
+        {{- end }}
       labels:
         app: {{ template "tile38.name" . }}
         release: {{ .Release.Name }}
@@ -26,10 +33,22 @@ spec:
         - name: {{ .Chart.Name }}-leader
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["tile38-server"]
+          args:
+            - "-d"
+            - "/data"
+            {{- if .Values.leader.prometheus.enabled }}
+            - "--metrics-addr={{ .Values.leader.prometheus.host }}:{{ .Values.leader.prometheus.port }}"
+            {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+            {{- if .Values.leader.prometheus.enabled }}
+            - name: metrics
+              containerPort: {{ .Values.leader.prometheus.port }}
+              protocol: TCP           
+            {{- end }}
           volumeMounts:
             - name: data
               mountPath: "{{ .Values.leader.persistentVolume.mountPath }}"

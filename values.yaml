@@ -27,6 +27,12 @@ leader:
     size: 2Gi
     # storageClass: ""
     subPath: ""
+  prometheus:
+    enabled: true
+    port: 4321
+    listenAddr: 0.0.0.0
+    datadog:
+      enabled: true
 
 follower:
   replicaCount: 1
@@ -44,3 +50,9 @@ follower:
     size: 2Gi
     # storageClass: ""
     subPath: ""
+  prometheus:
+    enabled: true
+    port: 4321
+    listenAddr: 0.0.0.0
+    datadog:
+      enabled: true
