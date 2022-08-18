@@ -30,9 +30,6 @@ spec:
         role: leader
     spec:
       initContainers:
-        - name: ping-leader
-          image: busybox
-          command: ["wget", "{{ template "tile38.fullname" .}}-leader:{{.Values.service.port}}/healthz"]
         - name: load-config
           image: busybox
           command: ["cp", "/config/config", "/data/config"]
