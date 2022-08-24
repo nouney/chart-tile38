@@ -4,7 +4,7 @@
 
 image:
   repository: tile38/tile38
-  tag: 1.12.3
+  tag: 1.29.0
   pullPolicy: IfNotPresent
 
 service:

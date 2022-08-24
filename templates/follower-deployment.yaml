@@ -9,6 +9,7 @@ metadata:
     heritage: {{ .Release.Service }}
     role: follower
 spec:
+  revisionHistoryLimit: 3
   replicas: {{ .Values.follower.replicaCount }}
   selector:
     matchLabels:
