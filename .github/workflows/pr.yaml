@@ -1,0 +1,24 @@
+name: PR Validator
+
+on:
+  push:
+  pull_request: 
+
+jobs:
+  validate_version_bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: '0'
+      
+      - name: install yq
+        uses: frenck/action-setup-yq@v1
+      
+      - name: get Chart version
+        run: echo CHART_VERSION=$(yq '.version' Chart.yaml) >> $GITHUB_ENV
+      
+      - name: check if version tag exists
+        run: |
+          if [ $(git tag -l "${{ env.CHART_VERSION }}") ]; then exit 1; else exit 0; fi
