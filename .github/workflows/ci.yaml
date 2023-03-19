@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+    tags-ignore:
+      - '*'
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: "setup helm"
+        uses: azure/setup-helm@v1
+        with:
+          version: 'v3.2.4'
+      
+      - name: lint
+        run: helm lint -f values.yaml
+      
+      - name: test deployment
+        run: helm template -f values.yaml .  --debug
+
+  release_version:
+    if: github.ref_name == 'master' || github.ref_name == 'main'
+    permissions: 
+      contents: 'write'
+      id-token: 'write'
+    runs-on: ubuntu-latest
+    needs: 
+      - ci
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: "setup helm"
+        uses: azure/setup-helm@v1
+        with:
+          version: 'v3.2.4'
+      
+      - name: get Chart version
+        run: echo CHART_VERSION=$(yq '.version' Chart.yaml) >> $GITHUB_ENV
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v0.5.0'
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIP }}
+          service_account: 'gh-actions-production-sa@climacell-security-tools.iam.gserviceaccount.com'
+          token_format: 'access_token'
+
+      - name: setup gcs plugin
+        run: |
+          helm plugin install https://github.com/hayorov/helm-gcs.git;
+          helm repo add gcs-repo gs://tomorrow-helm-charts;
+      
+      - name: push to gcs
+        run: |
+          helm package .
+          helm gcs push tile38-${{ env.CHART_VERSION }}.tgz gcs-repo
+      
+      - name: push git tag
+        run: |
+          git tag ${{ env.CHART_VERSION }}
+          git push origin ${{ env.CHART_VERSION }}
