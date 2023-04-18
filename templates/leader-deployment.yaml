@@ -91,6 +91,14 @@ spec:
       tolerations:
 {{ toYaml . | indent 8 }}
     {{- end }}
+{{- if .Values.serviceAccount.enabled }}
+      serviceAccount:
+{{ toYaml .Values.serviceAccount.email | indent 8 }}
+{{- end }}
+{{- if .Values.serviceAccount.name }}
+      serviceAccountName:
+{{ toYaml .Values.serviceAccount.name | indent 8 }}
+{{- end }}
       volumes:
         - name: config
           configMap:
